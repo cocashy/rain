@@ -20,7 +20,7 @@ class Vector2:
 
     def __add__(self, other):
         return Vector2(self.x + other.x, self.y + other.y)
-    
+
     def __sub__(self, other):
         return Vector2(self.x - other.x, self.y - other.y)
 
@@ -47,11 +47,10 @@ class Player(Rect):
         self.life = LIFE
 
     def update(self):
-        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
-            if self.pos.x + self.w / 2 < pyxel.mouse_x:
-                self.pos += Vector2(PLAYER_VEL, 0)
-            if self.pos.x + self.w / 2 > pyxel.mouse_x:
-                self.pos += Vector2(-PLAYER_VEL, 0)
+        if self.pos.x + self.w / 2 < pyxel.mouse_x:
+            self.pos += Vector2(PLAYER_VEL, 0)
+        if self.pos.x + self.w / 2 > pyxel.mouse_x:
+            self.pos += Vector2(-PLAYER_VEL, 0)
 
         if self.pos.x < 0:
             self.pos.x = 0
@@ -70,7 +69,7 @@ class Rain(Rect):
     def __init__(self, x, y, col):
         super().__init__(x, y, RAIN_W, RAIN_H, col)
         self.vel = Vector2(0, RAIN_VEL)
-        
+
     def update(self):
         self.pos += self.vel
 
@@ -112,7 +111,7 @@ class App:
             self.prev_pressed = True
         else:
             self.prev_pressed = False
-        
+
         if self.scene != Scene.PLAY:
             return
 
