@@ -11,7 +11,7 @@ class Col(IntEnum):
     PLAYER = 12
     ENEMY = 8
 
-W = H = 256
+W = H = 128
 
 class Vector2:
     def __init__(self, x, y):
@@ -35,7 +35,7 @@ class Rect:
         pyxel.rect(self.pos.x, self.pos.y, self.w, self.h, self.col)
 
 LIFE = 3
-PLAYER_W = 64
+PLAYER_W = 32
 PLAYER_H = 16
 PLAYER_VEL = 16
 
@@ -57,13 +57,16 @@ class Player(Rect):
         if self.pos.x + self.w > W:
             self.pos.x = W - self.w
 
+    def draw(self):
+        pyxel.blt(self.pos.x, self.pos.y, 0, 0, 0, self.w, self.h, 0)
+
     def coll(self, rain):
-        return self.pos.x < rain.pos.x < self.pos.x + self.w \
-           and self.pos.y < rain.pos.y < self.pos.y + self.h
+        return self.pos.x <= rain.pos.x < self.pos.x + self.w \
+           and self.pos.y <= rain.pos.y < self.pos.y + self.h
 
 RAIN_W = 2
 RAIN_H = 8
-RAIN_VEL = 8
+RAIN_VEL = 4
 
 class Rain(Rect):
     def __init__(self, x, y, col):
@@ -77,9 +80,9 @@ class Rain(Rect):
         return self.pos.y > H
 
 INTERVAL_MAX = 10
-INTERVAL_MIN = 4
+INTERVAL_MIN = 3
 THRESHOLD_MAX = 0.8
-THRESHOLD_MIN = 0.4
+THRESHOLD_MIN = 0.6
 MAX_DIFFICULTY_POINT = 200
 
 def ctext(x, y, s, col):
@@ -89,13 +92,14 @@ def ctext(x, y, s, col):
 class App:
     def __init__(self):
         pyxel.init(W, H, title="Rain")
+        pyxel.load("rain.pyxres")
+        pyxel.mouse(True)
         self.player = Player()
         self.rains = []
         self.t = 0
         self.scene = Scene.START
         self.prev_pressed = False
-        pyxel.mouse(True)
-        pyxel.load("rain.pyxres")
+        self.best = 0
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -104,10 +108,12 @@ class App:
         if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
             if not self.prev_pressed and self.scene == Scene.START:
                 self.scene = Scene.PLAY
+                pyxel.playm(0, loop=True)
             if not self.prev_pressed and self.scene == Scene.END:
                 self.player = Player()
                 self.rains = []
                 self.scene = Scene.START
+                pyxel.play(3, 2, loop=False)
             self.prev_pressed = True
         else:
             self.prev_pressed = False
@@ -132,12 +138,16 @@ class App:
             elif self.player.coll(rain):
                 if rain.col == Col.PLAYER:
                     self.player.point += 1
-                    pyxel.play(1, 0, loop=False)
+                    self.best = max(self.best, self.player.point)
+                    pyxel.play(3, 0, loop=False)
                 elif rain.col == Col.ENEMY:
                     self.player.life -= 1
-                    pyxel.play(1, 1, loop=False)
+                    pyxel.play(3, 1, loop=False)
                     if self.player.life <= 0:
                         self.scene = Scene.END
+                        pyxel.stop(0)
+                        pyxel.stop(1)
+                        pyxel.stop(2)
                 self.rains.remove(rain)
 
     def draw(self):
@@ -147,6 +157,8 @@ class App:
         for rain in self.rains:
             rain.draw()
 
+        pyxel.text(1, 1, str(self.best), Col.PLAYER)
+        
         if self.scene == Scene.START:
             ctext(W // 2, H // 2, "START", Col.PLAYER)
         if self.scene == Scene.PLAY:
